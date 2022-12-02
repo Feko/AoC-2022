@@ -13,7 +13,7 @@ namespace TestProject1
         [Fact]
         public void Day01_Part1()
         {
-            //var input = File.ReadAllText("Inputs/day01_demo.txt");
+            //var input = File.ReadAllText("Inputs/day01_sample.txt");
             var input = File.ReadAllText("Inputs/day01.txt");
 
             var caloriesPerElf = input.Split("\n\n")
@@ -25,7 +25,7 @@ namespace TestProject1
         [Fact]
         public void Day01_Part2()
         {
-            //var input = File.ReadAllText("Inputs/day01_demo.txt");
+            //var input = File.ReadAllText("Inputs/day01_sample.txt");
             var input = File.ReadAllText("Inputs/day01.txt");
 
             var caloriesPerElf = input.Split("\n\n")
