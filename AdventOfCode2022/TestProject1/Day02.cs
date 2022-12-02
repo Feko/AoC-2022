@@ -35,6 +35,7 @@ namespace TestProject1
         };
 
         private int GetHandScore(Hand hand) => (int)hand + 1;
+
         private bool Draw(Hand opponent, Hand myHand) => opponent == myHand;
 
         private bool Win(Hand opponent, Hand myHand) => _possibilityMatrix[opponent].loses == myHand;
@@ -62,9 +63,9 @@ namespace TestProject1
             //var input = File.ReadAllLines("Inputs/day02.txt");
 
             var games = input.Where(s => !string.IsNullOrEmpty(s))
-                .Select(s => { var item = s.Split(' '); return new KeyValuePair<Hand, Hand>(_hands[item[0]], _hands[item[1]]); });
+                .Select(s => { var item = s.Split(' '); return new { opponent = _hands[item[0]], myHand = _hands[item[1]] }; });
 
-            var myScore = games.Select(x => RoundScore(x.Key, x.Value)).Sum();
+            var myScore = games.Select(x => RoundScore(x.opponent, x.myHand)).Sum();
 
             Assert.Equal(15, myScore);
         }
@@ -76,9 +77,9 @@ namespace TestProject1
             //var input = File.ReadAllLines("Inputs/day02.txt");
 
             var games = input.Where(s => !string.IsNullOrEmpty(s))
-                .Select(s => { var item = s.Split(' '); return new KeyValuePair<Hand, Hand>(_hands[item[0]], GetHand(_hands[item[0]], item[1])); });
+                .Select(s => { var item = s.Split(' '); return new { opponent = _hands[item[0]], myHand = GetHand(_hands[item[0]], item[1]) }; });
 
-            var myScore = games.Select(x => RoundScore(x.Key, x.Value)).Sum();
+            var myScore = games.Select(x => RoundScore(x.opponent, x.myHand)).Sum();
 
             Assert.Equal(12, myScore);
         }
