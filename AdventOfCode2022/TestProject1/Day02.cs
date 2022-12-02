@@ -34,36 +34,25 @@ namespace TestProject1
             { Hand.Scissors, (Hand.Paper, Hand.Rock) }
         };
 
-        private Dictionary<Hand, int> _handScores = new Dictionary<Hand, int>()
-        {
-            { Hand.Rock, 1 },
-            { Hand.Paper, 2 },
-            { Hand.Scissors, 3 },
-        };
-
+        private int GetHandScore(Hand hand) => (int)hand + 1;
         private bool Draw(Hand opponent, Hand myHand) => opponent == myHand;
 
-        private bool Win(Hand opponent, Hand myHand) =>
-            (myHand == Hand.Rock && opponent == Hand.Scissors) ||
-            (myHand == Hand.Paper && opponent == Hand.Rock) ||
-            (myHand == Hand.Scissors && opponent == Hand.Paper);
+        private bool Win(Hand opponent, Hand myHand) => _possibilityMatrix[opponent].loses == myHand;
 
         private int RoundScore(Hand opponent, Hand myHand)
         {
             int score = Win(opponent, myHand) ? 6 : (Draw(opponent, myHand) ? 3 : 0);
-            return score + _handScores[myHand];
+            return score + GetHandScore(myHand);
         }
 
         private Hand GetHand(Hand opponent, string strategy)
-        {
-            if (strategy == "Y") // draw
-                return opponent;
-            
-            if (strategy == "X") // I should lose, returns what wins
-                return _possibilityMatrix[opponent].wins;
-
-            return _possibilityMatrix[opponent].loses;
-        }
+            => strategy switch
+            {
+                "Y" => opponent,
+                "X" => _possibilityMatrix[opponent].wins,
+                "Z" => _possibilityMatrix[opponent].loses,
+                _ => throw new NotImplementedException()
+            };
 
 
         [Fact]
