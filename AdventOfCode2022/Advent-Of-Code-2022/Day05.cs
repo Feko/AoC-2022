@@ -57,7 +57,7 @@ namespace TestProject1
         [Fact]
         public void Day05_Part1()
         {
-            var lines = System.IO.File.ReadAllLines("Inputs/day05_sample.txt");
+            var lines = System.IO.File.ReadAllLines("Inputs/day05.txt");
             var separatorIndex = lines.TakeWhile(x => !x.StartsWith(" 1   2   3")).Count();
 
             InitializeStacks(CalculateAmountStacks(lines[separatorIndex]));
@@ -77,7 +77,7 @@ namespace TestProject1
         [Fact]
         public void Day05_Part2()
         {
-            var lines = System.IO.File.ReadAllLines("Inputs/day05_sample.txt");
+            var lines = System.IO.File.ReadAllLines("Inputs/day05.txt");
             var separatorIndex = lines.TakeWhile(x => !x.StartsWith(" 1   2   3")).Count();
 
             InitializeStacks(CalculateAmountStacks(lines[separatorIndex]));
