@@ -13,8 +13,8 @@ namespace TestProject1
         [Fact]
         public void Day01_Part1()
         {
-            //var input = File.ReadAllText("Inputs/day01_sample.txt");
-            var input = File.ReadAllText("Inputs/day01.txt");
+            var input = File.ReadAllText("Inputs/day01_sample.txt");
+            //var input = File.ReadAllText("Inputs/day01.txt");
 
             var caloriesPerElf = input.Split("\n\n")
                 .Select(x => x.Split("\n").Select(r => string.IsNullOrEmpty(r) ? 0 : Convert.ToInt32(r)).Sum());
@@ -25,8 +25,8 @@ namespace TestProject1
         [Fact]
         public void Day01_Part2()
         {
-            //var input = File.ReadAllText("Inputs/day01_sample.txt");
-            var input = File.ReadAllText("Inputs/day01.txt");
+            var input = File.ReadAllText("Inputs/day01_sample.txt");
+            //var input = File.ReadAllText("Inputs/day01.txt");
 
             var caloriesPerElf = input.Split("\n\n")
                 .Select(x => x.Split("\n").Select(r => string.IsNullOrEmpty(r) ? 0 : Convert.ToInt32(r)).Sum()).ToList();

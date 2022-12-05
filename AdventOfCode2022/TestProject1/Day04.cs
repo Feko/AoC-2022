@@ -32,8 +32,8 @@ namespace TestProject1
         [Fact]
         public void Day04_Part1()
         {
-            //var input = File.ReadAllLines("Inputs/day04_sample.txt");
-            var input = File.ReadAllLines("Inputs/day04.txt");
+            var input = File.ReadAllLines("Inputs/day04_sample.txt");
+            //var input = File.ReadAllLines("Inputs/day04.txt");
 
             var elfPairs = input.Where(s => !string.IsNullOrEmpty(s))
                 .Select(s => { var elfs = s.Split(','); return new { elf1 = new Elf(elfs[0]), elf2 = new Elf(elfs[1]) }; });
@@ -44,8 +44,8 @@ namespace TestProject1
         [Fact]
         public void Day04_Part2()
         {
-            //var input = File.ReadAllLines("Inputs/day04_sample.txt");
-            var input = File.ReadAllLines("Inputs/day04.txt");
+            var input = File.ReadAllLines("Inputs/day04_sample.txt");
+            //var input = File.ReadAllLines("Inputs/day04.txt");
 
             var elfPairs = input.Where(s => !string.IsNullOrEmpty(s))
                 .Select(s => { var elfs = s.Split(','); return new { elf1 = new Elf(elfs[0]), elf2 = new Elf(elfs[1]) }; });
