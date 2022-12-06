@@ -15,15 +15,8 @@ namespace TestProject1
         {
             //var text = File.ReadAllText("Inputs/day06.txt");
             var text = "bvwbjplbgvbhsrlpgdmjqwftvncz";
-            (bool hasFound, int current) = (false, 0);
 
-            while (!hasFound)
-            {
-                hasFound = text[current..(current + 4)].ToCharArray().Distinct().Count() == 4;
-                current++;
-            }
-
-            Assert.Equal(5, current+3);
+            Assert.Equal(5, GetMarkerIndex(text, 4));
         }
 
         [Fact]
@@ -31,15 +24,21 @@ namespace TestProject1
         {
             //var text = File.ReadAllText("Inputs/day06.txt");
             var text = "nznrnfrfntjfmvfwmzdfjlvtqnbhcprsg";
+
+            Assert.Equal(29, GetMarkerIndex(text, 14));
+        }
+
+        private int GetMarkerIndex(string text, int blockSize)
+        {
             (bool hasFound, int current) = (false, 0);
 
             while (!hasFound)
             {
-                hasFound = text[current..(current + 14)].ToCharArray().Distinct().Count() == 14;
+                hasFound = text[current..(current + blockSize)].ToCharArray().Distinct().Count() == blockSize;
                 current++;
             }
 
-            Assert.Equal(29, current + 13);
+            return current + blockSize - 1;
         }
     }
 }
