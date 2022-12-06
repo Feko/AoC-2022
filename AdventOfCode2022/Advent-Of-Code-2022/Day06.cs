@@ -29,7 +29,17 @@ namespace TestProject1
         [Fact]
         public void Day06_Part2()
         {
-            
+            //var text = File.ReadAllText("Inputs/day06.txt");
+            var text = "nznrnfrfntjfmvfwmzdfjlvtqnbhcprsg";
+            (bool hasFound, int current) = (false, 0);
+
+            while (!hasFound)
+            {
+                hasFound = text[current..(current + 14)].ToCharArray().Distinct().Count() == 14;
+                current++;
+            }
+
+            Assert.Equal(29, current + 13);
         }
     }
 }
