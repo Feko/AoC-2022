@@ -13,7 +13,6 @@ namespace TestProject1
         interface INode
         {
             string Name { get; set; }
-            bool IsFile();
             long GetSize();
         }
 
@@ -32,7 +31,6 @@ namespace TestProject1
             public long GetSize() => Subitems.Select(i => i.GetSize()).Sum();
             public void AddFile(string line) => Subitems.Add(new File(line));
             public void AddDirectory(string line) => Subitems.Add(new Directory(line.Split(' ')[1], this));
-            public bool IsFile() => false;
         }
 
         class File : INode
@@ -41,7 +39,6 @@ namespace TestProject1
             public long Size;
 
             public long GetSize() => Size;
-            public bool IsFile() => true;
             public File(string row)
             {
                 var parts = row.Split(' ');
@@ -82,7 +79,7 @@ namespace TestProject1
         private IList<INode> ClimbTheTree(Directory node, long threshold)
         {
             var result = new List<INode>();
-            foreach (var subdir in node.Subitems.Where(i => !i.IsFile()))
+            foreach (var subdir in node.Subitems.Where(i => i.GetType() == typeof(Directory)))
             {
                 result.AddRange(ClimbTheTree((Directory)subdir, threshold));
             }
