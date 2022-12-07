@@ -94,14 +94,31 @@ namespace TestProject1
 
 
         [Fact]
-        public void Test1()
+        public void Day07_Part1()
         {
-            var text = System.IO.File.ReadAllLines("Inputs/day07.txt");
+            var text = System.IO.File.ReadAllLines("Inputs/day07_sample.txt");
             var tree = BuildTree(text);
             var result = ClimbTheTree(tree, 100_000);
 
             Assert.Equal(95437, result.Sum(x => x.GetSize()));
 
+        }
+
+        [Fact]
+        public void Day07_Part2()
+        {
+            var text = System.IO.File.ReadAllLines("Inputs/day07_sample.txt");
+            var tree = BuildTree(text);
+
+            long filesystemSize = 70_000_000;
+            long freeSpace = filesystemSize - tree.GetSize();
+            long requiredSpace = 30_000_000;
+            long minimumDirectorySize = requiredSpace - freeSpace;
+
+            var result = ClimbTheTree(tree, Int64.MaxValue);
+            var directoryToDelete = result.OrderBy(dir => dir.GetSize()).First(dir => dir.GetSize() >= minimumDirectorySize);
+
+            Assert.Equal(24933642, directoryToDelete.GetSize());
         }
     }
 }
