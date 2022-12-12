@@ -12,18 +12,22 @@ namespace TestProject1
     {
         private int GetCost(char c) => c switch
         {
-            'S' => 100,
+            'S' => 'a' - 96,
             'E' => 'z' - 96,
             _ => c - 96
         };
 
         private string GetNodeName(int line, int column) => $"N{line}x{column}";
 
-        [Fact]
-        public void Day06_Part1()
+        public class PathContext
         {
-            var lines = File.ReadAllLines("Inputs/day12.txt");
-            //var lines = File.ReadAllLines("Inputs/day12_sample.txt");
+            public string Start { get; set; }
+            public string Finish { get; set; }
+            public Dictionary<string, Dictionary<string, int>> Graph { get; set; }
+        }
+
+        public PathContext GetGraph(string[] lines)
+        {
             string start = "", finish = "";
 
             Dictionary<string, Dictionary<string, int>> graph = new();
@@ -55,9 +59,47 @@ namespace TestProject1
                     graph.Add(GetNodeName(line, column), neighbours);
                 }
             }
-            var costMatrix = KindOfDijikistra(graph, start);
+            return new PathContext() { Start = start, Finish = finish, Graph = graph };
+        }
 
-            Assert.Equal(31, costMatrix[finish].steps);
+        [Fact]
+        public void Day12_Part1()
+        {
+            var lines = File.ReadAllLines("Inputs/day12.txt"); int expected = 462;
+            //var lines = File.ReadAllLines("Inputs/day12_sample.txt"); int expected = 31;
+
+            var context = GetGraph(lines);
+
+            var costMatrix = KindOfDijikistra(context.Graph, context.Start);
+
+            Assert.Equal(expected, costMatrix[context.Finish].steps);
+        }
+
+        [Fact]
+        public void Day12_Part2()
+        {
+            //var lines = File.ReadAllLines("Inputs/day12.txt"); int expected = 451;
+            var lines = File.ReadAllLines("Inputs/day12_sample.txt"); int expected = 29;
+
+            var context = GetGraph(lines);
+
+            int lowest = Int32.MaxValue;
+
+            // TODO: This is going to be SUPER SLOW, try to solve it in a different, smarter way.
+            for (int line = 0; line < lines.Length; line++)
+            {
+                for (int column = 0; column < lines[line].Length; column++)
+                {
+                    if (lines[line][column] == 'a')
+                    {
+                        var costMatrix = KindOfDijikistra(context.Graph, GetNodeName(line, column));
+                        if(costMatrix.ContainsKey(context.Finish))
+                            lowest = Math.Min(lowest, costMatrix[context.Finish].steps);
+                    }
+                }
+            }
+
+            Assert.Equal(expected, lowest);
         }
 
         private static Dictionary<string, (string from, int cost, int steps)> KindOfDijikistra(Dictionary<string, Dictionary<string, int>> graph, string startPoint)
@@ -66,7 +108,7 @@ namespace TestProject1
             costMatrix.Add(startPoint, (startPoint, 0, 0));
 
             string current = startPoint;
-            Dictionary<string, bool> alreadyVisited = new(graph.Count);
+            HashSet<string> alreadyVisited = new(graph.Count);
 
             for (int i = 0; i < graph.Count; i++)
             {
@@ -75,10 +117,7 @@ namespace TestProject1
 
                 foreach (var link in graph[current])
                 {
-                    if (alreadyVisited.ContainsKey(link.Key))
-                        continue;
-
-                    if (link.Value > costMatrix[current].cost + 1)
+                    if (alreadyVisited.Contains(link.Key))
                         continue;
 
                     int thisCost = link.Value + costMatrix[current].cost;
@@ -94,8 +133,8 @@ namespace TestProject1
                     }
                 }
 
-                alreadyVisited.Add(current, true);
-                current = costMatrix.Where(c => !alreadyVisited.ContainsKey(c.Key))
+                alreadyVisited.Add(current);
+                current = costMatrix.Where(c => !alreadyVisited.Contains(c.Key))
                     .OrderBy(x => x.Value.steps).FirstOrDefault().Key;
             }
 
