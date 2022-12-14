@@ -13,61 +13,34 @@ namespace TestProject1
         private const char WALL = '#';
         private const char SAND = 'o';
         private const char EMPTY = '.';
+
         public char[,] Matrix { get; set; }
-        public int MinX { get; set; }
-        public int MinY { get; set; }
+        public int XPositionModifier { get; set; }
+
+        private void CreateFloor()
+        {
+            var sizeX = Matrix.GetLength(1);
+            var sizeY = Matrix.GetLength(0);
+            for (int i = 0; i < sizeX; i++)
+                Matrix[sizeY - 1, i] = WALL;
+        }
 
         public void InitializeMatrix(int minX, int maxX, int minY, int maxY)
         {
-            (int sizeX, int sizeY) = (maxX - minX + 4, maxY  + 2);
-            (MinX, MinY) = (minX, minY);
-
-            Matrix = new char[sizeY, sizeX];
-
-            for (int x = 0; x < sizeX; x++)
-                for (int y = 0; y < sizeY; y++)
-                    Matrix[y, x] = EMPTY;
-
-        }
-
-        public void InitializeMatrix_Part2(int minX, int maxX, int minY, int maxY)
-        {
             int sizeY = maxY + 3;
-            int sizeX = (maxX - minX) + (maxY + minX) + (maxY + maxX) + 4;
-            //(MinX, MinY) = (minX, minY);
-            //MinX = 2;
-            MinX = (sizeX / 2) * -1;
 
+            // Well, not exactly horizontally infinite - but the maximum possible size, plus a little buffer
+            int sizeX = (maxX - minX) + (maxY + minX) + (maxY + maxX) + 4;
+
+            XPositionModifier = (sizeX / 2) * -1;
             Matrix = new char[sizeY, sizeX];
 
             for (int x = 0; x < sizeX; x++)
                 for (int y = 0; y < sizeY; y++)
                     Matrix[y, x] = EMPTY;
-
-            for (int i = 0; i < sizeX; i++)
-                Matrix[sizeY - 1, i] = WALL;
-
         }
 
-        public void ShowMatrix()
-        {
-            Console.Write("  ");
-            for (int column = 0; column < Matrix.GetLength(1); column++)
-                Console.Write(column % 10);
-
-            int rows = 0;
-            Console.Write($"\n{rows} ");
-            for (int y = 0; y < Matrix.GetLength(0); y++)
-            {
-                rows = rows == 9 ? 0 : rows+1;
-                for (int x = 0; x < Matrix.GetLength(1); x++)
-                    Console.Write(Matrix[y, x]);
-                Console.Write($"\n{rows} ");
-            }
-        }
-
-        public (int X, int Y) NormalizePosition(int x, int y) => (x - MinX + 2, y);
-        //public (int X, int Y) NormalizePosition(int x, int y) => (x - MinX + 2, y - MinY + 2);
+        public (int X, int Y) NormalizePosition(int x, int y) => (x - XPositionModifier + 2, y);
 
         public void AddWall(int x, int y)
         {
@@ -113,59 +86,48 @@ namespace TestProject1
 
                     if (left.X == right.X)
                     {
-                        // Y is changing
+                        // Y-axis is changing
                         (int min, int max) = (Math.Min(left.Y, right.Y), Math.Max(left.Y, right.Y));
                         for (int i = min; i <= max; i++)
-                        {
                             AddWall(left.X, i);
-                        }
+
                     }
                     else
                     {
-                        // X is changing
+                        // X-axis is changing
                         (int min, int max) = (Math.Min(left.X, right.X), Math.Max(left.X, right.X));
                         for (int i = min; i <= max; i++)
-                        {
                             AddWall(i, left.Y);
-                        }
+
                     }
                 }
             }
         }
 
-
-        [Fact]
-        public void Day14_Part1()
+        private void InitializeCaveMap(string[] lines)
         {
-            int expected = 745;  var lines = System.IO.File.ReadAllLines("Inputs/day14.txt");
-            //int expected = 24; var lines = System.IO.File.ReadAllLines("Inputs/day14_sample.txt");
             var paths = lines.Select(line => line.Split(" -> ").Select(path => { var parts = path.Split(','); return (int.Parse(parts[0]), int.Parse(parts[1])); }).ToList()).ToList();
 
             var allParts = paths.SelectMany(x => x);
             (int minX, int maxX) = (allParts.Min(x => x.Item1), allParts.Max(x => x.Item1));
             (int minY, int maxY) = (allParts.Min(x => x.Item2), allParts.Max(x => x.Item2));
 
-            //Console.WriteLine($"{nameof(minX)}{minX} - {nameof(maxX)}{maxX} - {nameof(minY)}{minY} - {nameof(maxY)}{maxY} - ");
-
-            int amountSand = 0;
             InitializeMatrix(minX, maxX, minY, maxY);
             PopulatePaths(paths);
-            //ShowMatrix();
+        }
 
-            //for (int i = 0; i < 5; i++)
-            //{
-            //    var pos = GetStartingSandPositiong();
-            //    var nextPos = GetNextSandPosition(pos);
-            //    AddSand(nextPos.X, nextPos.Y);
+        [Fact]
+        public void Day14_Part1()
+        {
+            int expected = 745; var lines = System.IO.File.ReadAllLines("Inputs/day14.txt");
+            //int expected = 24; var lines = System.IO.File.ReadAllLines("Inputs/day14_sample.txt");
+            InitializeCaveMap(lines);
 
-            //}
-
+            int amountSand = 0;
 
             while (true)
             {
-                var pos = GetStartingSandPositiong();
-                var nextPos = GetNextSandPosition(pos);
-                //Console.WriteLine($"Iteraction {amountSand} with position {nextPos.X} , {nextPos.Y}");
+                var nextPos = GetNextSandPosition(GetStartingSandPositiong());
                 if (IsOutbound(nextPos.Y))
                     break;
 
@@ -173,12 +135,7 @@ namespace TestProject1
                 amountSand++;
             }
 
-
-            ShowMatrix();
-            Console.WriteLine($"\nThe matrix was filled with {amountSand} sands");
-
             Assert.Equal(expected, amountSand);
-
         }
 
         [Fact]
@@ -186,27 +143,11 @@ namespace TestProject1
         {
             int expected = 27551; var lines = System.IO.File.ReadAllLines("Inputs/day14.txt");
             //int expected = 93; var lines = System.IO.File.ReadAllLines("Inputs/day14_sample.txt");
-            var paths = lines.Select(line => line.Split(" -> ").Select(path => { var parts = path.Split(','); return (int.Parse(parts[0]), int.Parse(parts[1])); }).ToList()).ToList();
+            InitializeCaveMap(lines);
 
-            var allParts = paths.SelectMany(x => x);
-            (int minX, int maxX) = (allParts.Min(x => x.Item1), allParts.Max(x => x.Item1));
-            (int minY, int maxY) = (allParts.Min(x => x.Item2), allParts.Max(x => x.Item2));
-
-            //Console.WriteLine($"{nameof(minX)}{minX} - {nameof(maxX)}{maxX} - {nameof(minY)}{minY} - {nameof(maxY)}{maxY} - ");
+            CreateFloor();
 
             int amountSand = 0;
-            InitializeMatrix_Part2(minX, maxX, minY, maxY);
-            PopulatePaths(paths);
-            //ShowMatrix();
-
-            //for (int i = 0; i < 5; i++)
-            //{
-            //    var pos = GetStartingSandPositiong();
-            //    var nextPos = GetNextSandPosition(pos);
-            //    AddSand(nextPos.X, nextPos.Y);
-
-            //}
-
 
             while (true)
             {
@@ -214,19 +155,13 @@ namespace TestProject1
 
                 var pos = GetStartingSandPositiong();
                 var nextPos = GetNextSandPosition(pos);
-                //Console.WriteLine($"Iteraction {amountSand} with position {nextPos.X} , {nextPos.Y}");
                 if (pos.X == nextPos.X && pos.Y == nextPos.Y)
                     break;
 
                 AddSand(nextPos.X, nextPos.Y);
             }
 
-
-            //ShowMatrix();
-            Console.WriteLine($"\nThe matrix was filled with {amountSand} sands");
-
             Assert.Equal(expected, amountSand);
-
         }
     }
 }
