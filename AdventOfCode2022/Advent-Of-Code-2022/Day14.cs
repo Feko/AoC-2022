@@ -20,7 +20,6 @@ namespace TestProject1
         public void InitializeMatrix(int minX, int maxX, int minY, int maxY)
         {
             (int sizeX, int sizeY) = (maxX - minX + 4, maxY  + 2);
-            //(int sizeX, int sizeY) = (maxX - minX + 4, maxY - minY + 4);
             (MinX, MinY) = (minX, minY);
 
             Matrix = new char[sizeY, sizeX];
@@ -28,6 +27,25 @@ namespace TestProject1
             for (int x = 0; x < sizeX; x++)
                 for (int y = 0; y < sizeY; y++)
                     Matrix[y, x] = EMPTY;
+
+        }
+
+        public void InitializeMatrix_Part2(int minX, int maxX, int minY, int maxY)
+        {
+            int sizeY = maxY + 3;
+            int sizeX = (maxX - minX) + (maxY + minX) + (maxY + maxX) + 4;
+            //(MinX, MinY) = (minX, minY);
+            //MinX = 2;
+            MinX = (sizeX / 2) * -1;
+
+            Matrix = new char[sizeY, sizeX];
+
+            for (int x = 0; x < sizeX; x++)
+                for (int y = 0; y < sizeY; y++)
+                    Matrix[y, x] = EMPTY;
+
+            for (int i = 0; i < sizeX; i++)
+                Matrix[sizeY - 1, i] = WALL;
 
         }
 
@@ -117,10 +135,10 @@ namespace TestProject1
 
 
         [Fact]
-        public void Test1()
+        public void Day14_Part1()
         {
-            var lines = System.IO.File.ReadAllLines("Inputs/day14.txt");
-            //var lines = System.IO.File.ReadAllLines("Inputs/day14_sample.txt");
+            int expected = 745;  var lines = System.IO.File.ReadAllLines("Inputs/day14.txt");
+            //int expected = 24; var lines = System.IO.File.ReadAllLines("Inputs/day14_sample.txt");
             var paths = lines.Select(line => line.Split(" -> ").Select(path => { var parts = path.Split(','); return (int.Parse(parts[0]), int.Parse(parts[1])); }).ToList()).ToList();
 
             var allParts = paths.SelectMany(x => x);
@@ -159,7 +177,55 @@ namespace TestProject1
             ShowMatrix();
             Console.WriteLine($"\nThe matrix was filled with {amountSand} sands");
 
-            //Assert.Equal(24, amountSand);
+            Assert.Equal(expected, amountSand);
+
+        }
+
+        [Fact]
+        public void Day14_Part2()
+        {
+            int expected = 27551; var lines = System.IO.File.ReadAllLines("Inputs/day14.txt");
+            //int expected = 93; var lines = System.IO.File.ReadAllLines("Inputs/day14_sample.txt");
+            var paths = lines.Select(line => line.Split(" -> ").Select(path => { var parts = path.Split(','); return (int.Parse(parts[0]), int.Parse(parts[1])); }).ToList()).ToList();
+
+            var allParts = paths.SelectMany(x => x);
+            (int minX, int maxX) = (allParts.Min(x => x.Item1), allParts.Max(x => x.Item1));
+            (int minY, int maxY) = (allParts.Min(x => x.Item2), allParts.Max(x => x.Item2));
+
+            //Console.WriteLine($"{nameof(minX)}{minX} - {nameof(maxX)}{maxX} - {nameof(minY)}{minY} - {nameof(maxY)}{maxY} - ");
+
+            int amountSand = 0;
+            InitializeMatrix_Part2(minX, maxX, minY, maxY);
+            PopulatePaths(paths);
+            //ShowMatrix();
+
+            //for (int i = 0; i < 5; i++)
+            //{
+            //    var pos = GetStartingSandPositiong();
+            //    var nextPos = GetNextSandPosition(pos);
+            //    AddSand(nextPos.X, nextPos.Y);
+
+            //}
+
+
+            while (true)
+            {
+                amountSand++;
+
+                var pos = GetStartingSandPositiong();
+                var nextPos = GetNextSandPosition(pos);
+                //Console.WriteLine($"Iteraction {amountSand} with position {nextPos.X} , {nextPos.Y}");
+                if (pos.X == nextPos.X && pos.Y == nextPos.Y)
+                    break;
+
+                AddSand(nextPos.X, nextPos.Y);
+            }
+
+
+            //ShowMatrix();
+            Console.WriteLine($"\nThe matrix was filled with {amountSand} sands");
+
+            Assert.Equal(expected, amountSand);
 
         }
     }
