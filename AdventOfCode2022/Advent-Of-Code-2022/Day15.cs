@@ -85,6 +85,13 @@ namespace TestProject1
         }
 
         public bool ScanHitBeacon(Position position, int x, int y) => position.X == x && position.Y == y;
+        public bool ScanHitBeacon(SensorRead read, int currentDistance, int row)
+        {
+            return ScanHitBeacon(read.BeaconPosition, read.SensorPosition.X + ((currentDistance - 1 - row) * -1), read.SensorPosition.Y - row)
+                || ScanHitBeacon(read.BeaconPosition, read.SensorPosition.X + ((currentDistance - 1 - row) * -1), read.SensorPosition.Y + row)
+                || ScanHitBeacon(read.BeaconPosition, read.SensorPosition.X + (currentDistance - 1 - row), read.SensorPosition.Y - row)
+                || ScanHitBeacon(read.BeaconPosition, read.SensorPosition.X + (currentDistance - 1 - row), read.SensorPosition.Y + row);
+        }
 
         public void Scan(List<SensorRead> reads)
         {
@@ -97,17 +104,16 @@ namespace TestProject1
                 while (!hitBeacon)
                 {
                     currentDistance++;
+                    if (currentDistance % 200 == 0)
+                        Console.Write($"\r{currentDistance}");
                     for (int row = 0; row < currentDistance; row++)
                     {
-                        for (int column = (currentDistance - 1 - row) * -1; column < (currentDistance - row); column++)
-                        {
-                            AddItem(RANGE, read.SensorPosition.X + column, read.SensorPosition.Y - row);
-                            AddItem(RANGE, read.SensorPosition.X + column, read.SensorPosition.Y + row);
-
-                            if(ScanHitBeacon(read.BeaconPosition, read.SensorPosition.X + column, read.SensorPosition.Y - row) 
-                                || ScanHitBeacon(read.BeaconPosition, read.SensorPosition.X + column, read.SensorPosition.Y + row))
-                                hitBeacon = true;
-                        }
+                        AddItem(RANGE, read.SensorPosition.X + ((currentDistance - 1 - row) * -1), read.SensorPosition.Y - row);
+                        AddItem(RANGE, read.SensorPosition.X + ((currentDistance - 1 - row) * -1), read.SensorPosition.Y + row);
+                        AddItem(RANGE, read.SensorPosition.X + (currentDistance - 1 - row), read.SensorPosition.Y + row);
+                        AddItem(RANGE, read.SensorPosition.X + (currentDistance - 1 - row), read.SensorPosition.Y - row);
+                        if (ScanHitBeacon(read, currentDistance, row))
+                            hitBeacon = true;
                     }
                 }
             }
