@@ -1,9 +1,9 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
-var test = new TestProject1.Day14();
-test.Day14_Part2();
+var test = new TestProject1.Day15();
+test.Day15_Part1();
 
-void ShowMatrix() //Impossible to visualize Part2, it's over 1000 columns
+void ShowMatrix() 
 {
     Console.Write("  ");
     for (int column = 0; column < test.Matrix.GetLength(1); column++)
@@ -19,3 +19,5 @@ void ShowMatrix() //Impossible to visualize Part2, it's over 1000 columns
         Console.Write($"\n{rows} ");
     }
 }
+
+//ShowMatrix();
