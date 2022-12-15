@@ -15,9 +15,11 @@ namespace TestProject1
         private const char SENSOR = 'S';
         private const char EMPTY = '.';
 
-        public char[,] Matrix { get; set; }
+        public char[] Matrix { get; set; }
+        //public char[,] Matrix { get; set; }
         public int MinX { get; set; }
         public int MinY { get; set; }
+        public int TargetY { get; set; }
 
         public struct Position
         {
@@ -59,27 +61,27 @@ namespace TestProject1
             public int MaxY => Math.Max(SensorPosition.Y, BeaconPosition.Y);
         }
 
-        public void InitializeMatrix(List<SensorRead> reads)
+        public void InitializeMatrix(List<SensorRead> reads, int targetRow) 
         {
             (int minX, int maxX) = (reads.Select(x => x.MinX).Min(), reads.Select(x => x.MaxX).Max());
             (int minY, int maxY) = (reads.Select(x => x.MinY).Min(), reads.Select(x => x.MaxY).Max());
 
             (int sizeX, int sizeY) = (maxX - minX, maxY - minY);
 
-            Matrix = new char[sizeY, sizeX];
+            //Matrix = new char[sizeY, sizeX];
+            Matrix = new char[sizeX];
             MinX = minX;
             MinY = minY;
         }
 
         public (int x, int y) NormalizePosition(int x, int y) => (x - MinX, y - MinY);
-        public bool IsOutbounds(int x, int y) =>
-            y < 0 || x < 0 || x > Matrix.GetLength(1) - 1 || y > Matrix.GetLength(0) - 1;
+        public bool IsOutbounds(int x, int y) => y != TargetY || x < 0 || x > Matrix.Length - 1 ;
 
         public void AddItem(char item, int x, int y)
         {
             var pos = NormalizePosition(x, y);
             if(!IsOutbounds(pos.x, pos.y))
-                Matrix[pos.y, pos.x] = item;
+                Matrix[pos.x] = item;
         }
 
         public bool ScanHitBeacon(Position position, int x, int y) => position.X == x && position.Y == y;
@@ -124,20 +126,23 @@ namespace TestProject1
         [Fact]
         public void Day15_Part1()
         {
-            int onLine = 2000000; int expected = 26; var lines= File.ReadAllLines("Inputs/day15.txt");
-            //int onLine = 10; int expected = 26; var lines= File.ReadAllLines("Inputs/day15_sample.txt");
+            int onLine = 2000000; int expected = 26; var lines = File.ReadAllLines("Inputs/day15.txt");
+            //int onLine = 10; int expected = 26; var lines = File.ReadAllLines("Inputs/day15_sample.txt");
             var reads = lines.Select(line => SensorRead.Parse(line)).ToList();
 
-            InitializeMatrix(reads);
+            InitializeMatrix(reads, onLine);
             Scan(reads);
             //Scan(new[] { reads[6] }.ToList());
             AddBeaconsSensors(reads);
 
             //int expectedY = 10;
             //var normalized = NormalizePosition(0,y)
-            var whereBeaconsNotPresent = Enumerable.Range(0, Matrix.GetLength(1))
-                .Select(idx => Matrix[onLine, idx]).Count(x => x == RANGE);
-            
+
+            //var whereBeaconsNotPresent = Enumerable.Range(0, Matrix.GetLength(1))
+            //    .Select(idx => Matrix[onLine, idx]).Count(x => x == RANGE);
+
+            var whereBeaconsNotPresent = Matrix.Count(x => x == RANGE);
+
             Assert.Equal(expected, whereBeaconsNotPresent);
             
         }
