@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -21,7 +22,7 @@ namespace TestProject1
         public int MinY { get; set; }
         public int TargetY { get; set; }
 
-        public struct Position
+        public record Position
         {
             public int X { get; set; }
             public int Y { get; set; }
@@ -39,7 +40,7 @@ namespace TestProject1
 
         }
 
-        public struct SensorRead
+        public record SensorRead
         {
             public Position SensorPosition { get; set; }
             public Position BeaconPosition { get; set; }
@@ -59,6 +60,17 @@ namespace TestProject1
             public int MaxX => Math.Max(SensorPosition.X, BeaconPosition.X);
             public int MinY => Math.Min(SensorPosition.Y, BeaconPosition.Y);
             public int MaxY => Math.Max(SensorPosition.Y, BeaconPosition.Y);
+
+            public int GetRadius()
+            {
+                int distanceX = SensorPosition.X > BeaconPosition.X ? SensorPosition.X - BeaconPosition.X : BeaconPosition.X - SensorPosition.X;
+                int distanceY = SensorPosition.Y > BeaconPosition.Y ? SensorPosition.Y - BeaconPosition.Y : BeaconPosition.Y - SensorPosition.Y;
+                return distanceX + distanceY;
+            }
+
+            public bool InSignalRange(int row) => SensorPosition.Y + GetRadius() >= row && SensorPosition.Y - GetRadius() <= row;
+
+            public int GetDistance(int row) => row > SensorPosition.Y ? (SensorPosition.Y + GetRadius() - row) : (row - (SensorPosition.Y - GetRadius()));
         }
 
         public void InitializeMatrix(List<SensorRead> reads, int targetRow) 
@@ -70,6 +82,8 @@ namespace TestProject1
 
             //Matrix = new char[sizeY, sizeX];
             Matrix = new char[sizeX];
+            TargetY = targetRow;
+
             MinX = minX;
             MinY = minY;
         }
@@ -93,30 +107,38 @@ namespace TestProject1
                 || ScanHitBeacon(read.BeaconPosition, read.SensorPosition.X + (currentDistance - 1 - row), read.SensorPosition.Y + row);
         }
 
-        public void Scan(List<SensorRead> reads)
+        public int Scan(List<SensorRead> reads)
         {
-            int count = 1;
+            HashSet<Position> positions = new();
             foreach (var read in reads)
             {
-                Console.WriteLine($"Current working on read {count++}");
-                int currentDistance = 0;
-                bool hitBeacon = false;
-                while (!hitBeacon)
+                if (read.InSignalRange(TargetY))
                 {
-                    currentDistance++;
-                    if (currentDistance % 200 == 0)
-                        Console.Write($"\r{currentDistance}");
-                    for (int row = 0; row < currentDistance; row++)
-                    {
-                        AddItem(RANGE, read.SensorPosition.X + ((currentDistance - 1 - row) * -1), read.SensorPosition.Y - row);
-                        AddItem(RANGE, read.SensorPosition.X + ((currentDistance - 1 - row) * -1), read.SensorPosition.Y + row);
-                        AddItem(RANGE, read.SensorPosition.X + (currentDistance - 1 - row), read.SensorPosition.Y + row);
-                        AddItem(RANGE, read.SensorPosition.X + (currentDistance - 1 - row), read.SensorPosition.Y - row);
-                        if (ScanHitBeacon(read, currentDistance, row))
-                            hitBeacon = true;
-                    }
+                    int distance = read.GetDistance(TargetY);
+                    int radius = read.GetRadius();
+                    for (int i = read.SensorPosition.X - distance; i < read.SensorPosition.X + distance; i++)
+                        positions.Add(new Position() { X = i, Y = TargetY });
                 }
+                //int currentDistance = 0;
+                //bool hitBeacon = false;
+                //while (!hitBeacon)
+                //{
+                //    currentDistance++;
+                //    if (currentDistance % 200 == 0)
+                //        Console.Write($"\r{currentDistance}");
+                //    for (int row = 0; row < currentDistance; row++)
+                //    {
+                //        AddItem(RANGE, read.SensorPosition.X + ((currentDistance - 1 - row) * -1), read.SensorPosition.Y - row);
+                //        AddItem(RANGE, read.SensorPosition.X + ((currentDistance - 1 - row) * -1), read.SensorPosition.Y + row);
+                //        AddItem(RANGE, read.SensorPosition.X + (currentDistance - 1 - row), read.SensorPosition.Y + row);
+                //        AddItem(RANGE, read.SensorPosition.X + (currentDistance - 1 - row), read.SensorPosition.Y - row);
+                //        if (ScanHitBeacon(read, currentDistance, row))
+                //            hitBeacon = true;
+                //    }
+                //}
             }
+
+            return positions.Count;
         }
 
         public void AddBeaconsSensors(List<SensorRead> reads)
@@ -137,9 +159,9 @@ namespace TestProject1
             var reads = lines.Select(line => SensorRead.Parse(line)).ToList();
 
             InitializeMatrix(reads, onLine);
-            Scan(reads);
-            //Scan(new[] { reads[6] }.ToList());
-            AddBeaconsSensors(reads);
+            //Scan(reads);
+            //int whereBeaconsNotPresent = Scan(new[] { reads[6] }.ToList());
+            //AddBeaconsSensors(reads);
 
             //int expectedY = 10;
             //var normalized = NormalizePosition(0,y)
@@ -147,7 +169,8 @@ namespace TestProject1
             //var whereBeaconsNotPresent = Enumerable.Range(0, Matrix.GetLength(1))
             //    .Select(idx => Matrix[onLine, idx]).Count(x => x == RANGE);
 
-            var whereBeaconsNotPresent = Matrix.Count(x => x == RANGE);
+            //var whereBeaconsNotPresent = Matrix.Count(x => x == RANGE);
+            var whereBeaconsNotPresent = Scan(reads);
 
             Assert.Equal(expected, whereBeaconsNotPresent);
             
