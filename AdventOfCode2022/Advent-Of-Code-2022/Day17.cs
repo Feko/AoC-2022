@@ -13,17 +13,30 @@ public class Day17
     public const char OCCUPIED = '#';
     public const char EMPTY = ' ';
     public const int WIDTH = 7;
+    public static long MAX_HEIGHT = 0;
+    public static long DIFFERENCE_ACCUMULATOR = 0;
+    //public static long BUFFER_SIZE = 1000;
+    public static long BUFFER_SIZE = 10_000_000;
 
     public abstract class Shape
     {
-        public int Top { get; set; }
+        public long Top { get; set; }
         public int Left { get; set; }
         public char[,] Piece { get; set; }
-        public Shape(int top, int left)
+        public Shape(long top, int left)
         {
             Top = top;
             Left = left;
         }
+
+        public char MatrixAt(long line, int column)
+        {
+            var pos = BUFFER_SIZE - (MAX_HEIGHT - line - DIFFERENCE_ACCUMULATOR);
+            return Matrix[pos, column];
+        }
+
+        public void SaveMatrixAt(long line, int column, char c)
+            => Matrix[BUFFER_SIZE - (MAX_HEIGHT - line - DIFFERENCE_ACCUMULATOR), column] = c;
 
         public void Move(char c)
         {
@@ -51,7 +64,7 @@ public class Day17
                 return false;
             for (int i = 0; i < Height(); i++)
             {
-                if (Piece[i, 0] == OCCUPIED && Matrix[Head() + i, Left - 1] == OCCUPIED)
+                if (Piece[i, 0] == OCCUPIED && MatrixAt(Head() + i, Left - 1) == OCCUPIED)
                     return false;
             }
             return true;
@@ -64,7 +77,7 @@ public class Day17
 
             for (int i = 0; i < Height(); i++)
             {
-                if (Matrix[Head() + i, Left + Width()] == OCCUPIED)
+                if (MatrixAt(Head() + i, Left + Width()) == OCCUPIED)
                     return false;
             }
             return true;
@@ -72,12 +85,12 @@ public class Day17
 
         public virtual bool CanGoDown()
         {
-            if (Top == Matrix.GetLength(0) - 1)
+            if (Top == MAX_HEIGHT - 1)
                 return false;
 
             for (int i = 0; i < Width(); i++)
             {
-                if (Matrix[Top + 1, Left + i] == OCCUPIED)
+                if (MatrixAt(Top + 1, Left + i) == OCCUPIED)
                     return false;
             }
 
@@ -88,7 +101,8 @@ public class Day17
         {
             for (int line = 0; line < Height(); line++)
             {
-                Console.SetCursorPosition(Left + 2, Head() + 1 + line);
+                int position = Convert.ToInt32(BUFFER_SIZE - (MAX_HEIGHT - DIFFERENCE_ACCUMULATOR - Head()) + 1 + line);
+                Console.SetCursorPosition(Left + 2, position);
                 for (int column = 0; column < Width(); column++)
                     Console.Write(Piece[line, column]);
             }
@@ -102,7 +116,7 @@ public class Day17
                 {
                     if (Piece[line, column] == OCCUPIED)
                     {
-                        Matrix[Head() + line, Left + column] = OCCUPIED;
+                        SaveMatrixAt(Head() + line, Left + column, OCCUPIED);
                     }
                 }
             }
@@ -111,14 +125,14 @@ public class Day17
         public void GoDown() => Top++;
         public int Width() => Piece.GetLength(1);
         public int Height() => Piece.GetLength(0);
-        public int Head() => Top - Piece.GetLength(0) + 1;
-        public int Bottom() => Top;
+        public long Head() => Top - Piece.GetLength(0) + 1;
+        public long Bottom() => Top;
 
     }
 
     public class HorizontalLine : Shape
     {
-        public HorizontalLine(int top, int left) : base(top, left)
+        public HorizontalLine(long top, int left) : base(top, left)
         {
             Piece = new char[1, 4] { { '#', '#', '#', '#' } };
         }
@@ -126,7 +140,7 @@ public class Day17
 
     public class PlusSign : Shape
     {
-        public PlusSign(int top, int left) : base(top, left)
+        public PlusSign(long top, int left) : base(top, left)
         {
             Piece = new char[3, 3]{  {' ', '#', ' '},
                                     {'#', '#', '#'},
@@ -135,10 +149,10 @@ public class Day17
 
         public override bool CanGoDown()
         {
-            if (Top == Matrix.GetLength(0) - 1)
+            if (Top == MAX_HEIGHT - 1)
                 return false;
 
-            if (Matrix[Top, Left] == OCCUPIED || Matrix[Top + 1, Left + 1] == OCCUPIED || Matrix[Top, Left + 2] == OCCUPIED)
+            if (MatrixAt(Top, Left) == OCCUPIED || MatrixAt(Top + 1, Left + 1) == OCCUPIED || MatrixAt(Top, Left + 2) == OCCUPIED)
                 return false;
 
             return true;
@@ -149,7 +163,7 @@ public class Day17
             if (Left == 0)
                 return false;
 
-            if (Matrix[Head(), Left] == OCCUPIED || Matrix[Head() + 1, Left - 1] == OCCUPIED || Matrix[Bottom(), Left] == OCCUPIED)
+            if (MatrixAt(Head(), Left) == OCCUPIED || MatrixAt(Head() + 1, Left - 1) == OCCUPIED || MatrixAt(Bottom(), Left) == OCCUPIED)
                 return false;
             return true;
         }
@@ -159,9 +173,9 @@ public class Day17
             if (Left + Width() == WIDTH)
                 return false;
 
-            if (Matrix[Head(), Left + Width() - 1] == OCCUPIED
-                || Matrix[Head() + 1, Left + Width()] == OCCUPIED
-                || Matrix[Bottom(), Left + Width() - 1] == OCCUPIED)
+            if (MatrixAt(Head(), Left + Width() - 1) == OCCUPIED
+                || MatrixAt(Head() + 1, Left + Width()) == OCCUPIED
+                || MatrixAt(Bottom(), Left + Width() - 1) == OCCUPIED)
                 return false;
             return true;
         }
@@ -169,7 +183,7 @@ public class Day17
 
     public class RightBottomCorner : Shape
     {
-        public RightBottomCorner(int top, int left) : base(top, left)
+        public RightBottomCorner(long top, int left) : base(top, left)
         {
             Piece = new char[3, 3]{  {' ', ' ', '#'},
                                     {' ', ' ', '#'},
@@ -179,7 +193,7 @@ public class Day17
 
     public class VerticalLine : Shape
     {
-        public VerticalLine(int top, int left) : base(top, left)
+        public VerticalLine(long top, int left) : base(top, left)
         {
             Piece = new char[4, 1] { { '#' }, { '#' }, { '#' }, { '#' } };
         }
@@ -187,7 +201,7 @@ public class Day17
 
     public class CubeBlock : Shape
     {
-        public CubeBlock(int top, int left) : base(top, left)
+        public CubeBlock(long top, int left) : base(top, left)
         {
             Piece = new char[2, 2]{  {'#', '#'},
                                     {'#', '#'} };
@@ -222,7 +236,7 @@ public class Day17
         Console.Write($"\n +-------+");
     }
 
-    public Shape GetPiece(char piece, int currentHeight)
+    public Shape GetPiece(char piece, long currentHeight)
     {
         int left = 2;
         currentHeight = currentHeight - 3;
@@ -243,7 +257,7 @@ public class Day17
         ShowMatrix();
         piece.Print();
 
-        Thread.Sleep(200);
+        Thread.Sleep(50);
 
     }
 
@@ -263,7 +277,7 @@ public class Day17
             for (int column = 0; column < WIDTH; column++)
                 Matrix[line, column] = EMPTY;
 
-        int currentHeight = Matrix.GetLength(0) - 1;
+        long currentHeight = Matrix.GetLength(0) - 1;
 
         for (int i = 0; i < amountPieces; i++)
         {
@@ -292,8 +306,117 @@ public class Day17
         //Console.SetCursorPosition(0, 0);
         //ShowMatrix();
         //Console.SetCursorPosition(0, 45);
-        int maxHeight = (amountPieces * 4) - currentHeight - 1;
+        long maxHeight = (amountPieces * 4) - currentHeight - 1;
         Assert.Equal(expected, maxHeight);
         Console.WriteLine("The height is: " + maxHeight);
+    }
+
+
+    [Fact]
+    public void Part2()
+    {
+        Console.Clear();
+        //int expected = 3068; var text = System.IO.File.ReadAllText("Inputs/day17.txt");
+        long expected = 3068; var text = ">>><<><>><<<>><>>><<<>>><<<><<<>><>><<>>";
+        var pieces = "-+L|#";
+        var infiniteDirections = GetInfiniteSeries(text.ToArray()).GetEnumerator();
+        var infinitePieces = GetInfiniteSeries(pieces.ToArray()).GetEnumerator();
+
+        long amountPieces = 2022;
+        //int matrixBufferSize = 100;
+
+        char [,] GetCleanMatrix()
+        {
+            var newMatrix = new char[BUFFER_SIZE, WIDTH];
+            for (int line = 0; line < BUFFER_SIZE; line++)
+                for (int column = 0; column < WIDTH; column++)
+                    newMatrix[line, column] = EMPTY;
+            return newMatrix;
+        }
+        int ResetMatrix(long amountLinesToKeep)
+        {
+            var newMatrix = GetCleanMatrix();
+            int nonEmptyLines = 0;
+            for (int line = 1; line <= amountLinesToKeep; line++)
+            {
+                bool lineIsEmpty = true;
+                for (int column = 0; column < WIDTH; column++)
+                {
+                    newMatrix[BUFFER_SIZE - line, column] = Matrix[amountLinesToKeep - line, column];
+                    if (lineIsEmpty && newMatrix[BUFFER_SIZE - line, column] == OCCUPIED)
+                        lineIsEmpty = false;
+                }
+
+                if (lineIsEmpty)
+                {
+                    break;
+                }
+                nonEmptyLines++;
+            }
+            Matrix = newMatrix; 
+            return nonEmptyLines;
+        }
+
+        Matrix = GetCleanMatrix();
+
+        long hugeAssNumber = 1_000_000_000_000;
+        MAX_HEIGHT = 4 * hugeAssNumber;
+        long currentHeight = MAX_HEIGHT -1;
+        
+        long linesToKeep = Math.Max(10, BUFFER_SIZE / 20);
+        long threshold = BUFFER_SIZE - (linesToKeep /2) - 1;
+
+        amountPieces = hugeAssNumber;
+
+        for (long i = 0; i < amountPieces; i++)
+        {
+            if (i % 1_000_000 == 0)
+                Console.WriteLine("Current: " + i + ", height at " + (MAX_HEIGHT - currentHeight));
+
+            infinitePieces.MoveNext();
+            var piece = GetPiece(infinitePieces.Current, currentHeight);
+            infiniteDirections.MoveNext();
+            piece.Move(infiniteDirections.Current);
+            //Debug(piece);
+            do
+            {
+                if (piece.CanGoDown())
+                {
+                    piece.GoDown();
+                    //Debug(piece);
+                }
+                infiniteDirections.MoveNext();
+                piece.Move(infiniteDirections.Current);
+                //Debug(piece);
+            }
+            while (piece.CanGoDown());
+
+            piece.Save();
+            currentHeight = Math.Min(currentHeight, piece.Head() - 1);
+
+            var heightDiff = MAX_HEIGHT - DIFFERENCE_ACCUMULATOR - currentHeight;
+            //var heightDiff = MAX_HEIGHT + DIFFERENCE_ACCUMULATOR - currentHeight;
+            if (heightDiff > threshold)
+            {
+                int nonEmpty = ResetMatrix(linesToKeep);
+                //heightOnLastReset = MAX_HEIGHT - (currentHeight + heightOnLastReset);
+                DIFFERENCE_ACCUMULATOR = DIFFERENCE_ACCUMULATOR + (heightDiff - nonEmpty) -1;
+            }
+
+            //if (MAX_HEIGHT - (currentHeight + heightOnLastReset) > threshold)
+            //{
+            //    int nonEmpty = ResetMatrix(linesToKeep);
+            //    heightOnLastReset = MAX_HEIGHT - (currentHeight + heightOnLastReset);
+            //    DIFFERENCE_ACCUMULATOR = DIFFERENCE_ACCUMULATOR + (heightOnLastReset - nonEmpty) - 1;
+            //}
+
+        }
+
+        Console.SetCursorPosition(0, 0);
+        //ShowMatrix();
+        //Console.SetCursorPosition(0, 45);
+        long maxHeightWeReached = MAX_HEIGHT - currentHeight - 1;
+        //Assert.Equal(expected, maxHeightWeReached);
+        Console.WriteLine("The height is: " + maxHeightWeReached);
     }
 }
