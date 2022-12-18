@@ -316,8 +316,8 @@ public class Day17
     public void Part2()
     {
         Console.Clear();
-        //int expected = 3068; var text = System.IO.File.ReadAllText("Inputs/day17.txt");
-        long expected = 3068; var text = ">>><<><>><<<>><>>><<<>>><<<><<<>><>><<>>";
+        int expected = 3068; var text = System.IO.File.ReadAllText("Inputs/day17.txt");
+        //long expected = 3068; var text = ">>><<><>><<<>><>>><<<>>><<<><<<>><>><<>>";
         var pieces = "-+L|#";
         var infiniteDirections = GetInfiniteSeries(text.ToArray()).GetEnumerator();
         var infinitePieces = GetInfiniteSeries(pieces.ToArray()).GetEnumerator();
@@ -367,11 +367,12 @@ public class Day17
         long threshold = BUFFER_SIZE - (linesToKeep /2) - 1;
 
         amountPieces = hugeAssNumber;
+        amountPieces = 1_000_000;
+
 
         for (long i = 0; i < amountPieces; i++)
         {
-            if (i % 1_000_000 == 0)
-                Console.WriteLine("Current: " + i + ", height at " + (MAX_HEIGHT - currentHeight));
+            var realHeight = MAX_HEIGHT - currentHeight - 1;
 
             infinitePieces.MoveNext();
             var piece = GetPiece(infinitePieces.Current, currentHeight);
@@ -402,21 +403,124 @@ public class Day17
                 //heightOnLastReset = MAX_HEIGHT - (currentHeight + heightOnLastReset);
                 DIFFERENCE_ACCUMULATOR = DIFFERENCE_ACCUMULATOR + (heightDiff - nonEmpty) -1;
             }
-
-            //if (MAX_HEIGHT - (currentHeight + heightOnLastReset) > threshold)
-            //{
-            //    int nonEmpty = ResetMatrix(linesToKeep);
-            //    heightOnLastReset = MAX_HEIGHT - (currentHeight + heightOnLastReset);
-            //    DIFFERENCE_ACCUMULATOR = DIFFERENCE_ACCUMULATOR + (heightOnLastReset - nonEmpty) - 1;
-            //}
-
         }
 
-        Console.SetCursorPosition(0, 0);
+        //Console.SetCursorPosition(0, 0);
         //ShowMatrix();
         //Console.SetCursorPosition(0, 45);
-        long maxHeightWeReached = MAX_HEIGHT - currentHeight - 1;
+        //long maxHeightWeReached = MAX_HEIGHT - currentHeight - 1;
         //Assert.Equal(expected, maxHeightWeReached);
-        Console.WriteLine("The height is: " + maxHeightWeReached);
+        //Console.WriteLine("The height is: " + maxHeightWeReached);
+        //for (int i = 1; i < heights.Length -1; i++)
+        //{
+        //    Console.WriteLine($"On index {i} we have {heights[i]} - difference from previous {heights[i] - heights[i-1]}");
+        //}
+        int patternThreshold = 5000;
+        long patternLineStart = 0;
+        long patternLineFinish = 0;
+        for (long line = 1; line < 1000000; line++)
+        {
+            bool shouldBreak = false ;
+            for (long previousLine = 0; previousLine < line; previousLine++)
+            {
+                if (LineEquals(line, previousLine))
+                {
+
+                    int amount = 1;
+                    while (LineEquals(line + amount, previousLine + amount))
+                    {
+                        amount++;
+                    }
+                    if (amount > patternThreshold)
+                    {
+                        patternLineFinish = line + 1;
+                        patternLineStart = previousLine + 1;
+                        shouldBreak = true;
+                        break;
+                    }
+                }
+            }
+            if (shouldBreak)
+                break;
+        }
+
+        infiniteDirections = GetInfiniteSeries(text.ToArray()).GetEnumerator();
+        infinitePieces = GetInfiniteSeries(pieces.ToArray()).GetEnumerator();
+        Matrix = GetCleanMatrix();
+        currentHeight = MAX_HEIGHT - 1;
+
+        var patternSize = patternLineFinish - patternLineStart;
+        long piecesBeforePattern = 0;
+        long heightBeforePattern = 0;
+        long piecesWhenPatternStarted = 0;
+        long patternSizeInPieces = 0;
+
+        for (long i = 0; i < amountPieces; i++)
+        {
+            var realHeight = MAX_HEIGHT - currentHeight - 1;
+            if (i > 80)
+            { 
+            }
+            if (realHeight < patternLineStart)
+            {
+                piecesBeforePattern = i;
+                heightBeforePattern = realHeight;
+            }
+            if (realHeight == patternLineStart)
+            {
+                piecesWhenPatternStarted = i;
+            }
+            if (realHeight == patternLineFinish)
+            {
+                patternSizeInPieces = i - piecesWhenPatternStarted;
+                break;
+            }
+
+            infinitePieces.MoveNext();
+            var piece = GetPiece(infinitePieces.Current, currentHeight);
+            infiniteDirections.MoveNext();
+            piece.Move(infiniteDirections.Current);
+            //Debug(piece);
+            do
+            {
+                if (piece.CanGoDown())
+                {
+                    piece.GoDown();
+                    //Debug(piece);
+                }
+                infiniteDirections.MoveNext();
+                piece.Move(infiniteDirections.Current);
+                //Debug(piece);
+            }
+            while (piece.CanGoDown());
+
+            piece.Save();
+            currentHeight = Math.Min(currentHeight, piece.Head() - 1);
+
+            var heightDiff = MAX_HEIGHT - DIFFERENCE_ACCUMULATOR - currentHeight;
+            //var heightDiff = MAX_HEIGHT + DIFFERENCE_ACCUMULATOR - currentHeight;
+            if (heightDiff > threshold)
+            {
+                int nonEmpty = ResetMatrix(linesToKeep);
+                //heightOnLastReset = MAX_HEIGHT - (currentHeight + heightOnLastReset);
+                DIFFERENCE_ACCUMULATOR = DIFFERENCE_ACCUMULATOR + (heightDiff - nonEmpty) - 1;
+            }
+        }
+
+        long answer = (((hugeAssNumber - piecesBeforePattern) / patternSizeInPieces) * patternSize) + heightBeforePattern;
+
+
+        Console.WriteLine("Total height: " + answer);
+    }
+
+    public bool LineEquals(long line1, long line2)
+    {
+        line1 = BUFFER_SIZE - 1 - line1;
+        line2 = BUFFER_SIZE - 1 - line2;
+        for (int column = 0; column < WIDTH; column++)
+            if (Matrix[line1, column] != Matrix[line2, column])
+                return false;
+
+        return true;
     }
 }
