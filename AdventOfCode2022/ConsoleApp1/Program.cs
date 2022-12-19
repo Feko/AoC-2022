@@ -1,7 +1,8 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
 var test = new TestProject1.Day17();
-test.Part2();
+test.Day17_Part2();
+//test.Part2();
 
 
 
