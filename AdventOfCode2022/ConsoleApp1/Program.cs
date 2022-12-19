@@ -1,7 +1,9 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
-var test = new TestProject1.Day15();
-test.Day15_Part2();
+var test = new TestProject1.Day17();
+test.Part2();
+
+
 
 //void ShowMatrix() 
 //{

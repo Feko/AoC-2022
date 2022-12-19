@@ -415,7 +415,7 @@ public class Day17
         //{
         //    Console.WriteLine($"On index {i} we have {heights[i]} - difference from previous {heights[i] - heights[i-1]}");
         //}
-        int patternThreshold = 5000;
+        int patternThreshold = 500;
         long patternLineStart = 0;
         long patternLineFinish = 0;
         for (long line = 1; line < 1000000; line++)
@@ -433,6 +433,8 @@ public class Day17
                     }
                     if (amount > patternThreshold)
                     {
+                        //patternLineFinish = line;
+                        //patternLineStart = previousLine;
                         patternLineFinish = line + 1;
                         patternLineStart = previousLine + 1;
                         shouldBreak = true;
@@ -454,13 +456,14 @@ public class Day17
         long heightBeforePattern = 0;
         long piecesWhenPatternStarted = 0;
         long patternSizeInPieces = 0;
+        long remainingPieces = 0;
+        long heightLastPatternRunStart = 0;
+        long heightLastPatternRunFinish = 0;
 
         for (long i = 0; i < amountPieces; i++)
         {
             var realHeight = MAX_HEIGHT - currentHeight - 1;
-            if (i > 80)
-            { 
-            }
+           
             if (realHeight < patternLineStart)
             {
                 piecesBeforePattern = i;
@@ -473,7 +476,15 @@ public class Day17
             if (realHeight == patternLineFinish)
             {
                 patternSizeInPieces = i - piecesWhenPatternStarted;
-                break;
+                //break;
+                //OK, so now that we know the pattern size, and how many pieces we moved ... we need to find how many pieces we need to move in the last pattern loop.
+                remainingPieces = (hugeAssNumber - piecesBeforePattern) % patternSizeInPieces;
+                i = amountPieces - remainingPieces -1;
+                heightLastPatternRunStart = realHeight;
+            }
+            if (heightLastPatternRunStart > 0)
+            {
+                heightLastPatternRunFinish = realHeight;
             }
 
             infinitePieces.MoveNext();
@@ -507,7 +518,9 @@ public class Day17
             }
         }
 
-        long answer = (((hugeAssNumber - piecesBeforePattern) / patternSizeInPieces) * patternSize) + heightBeforePattern;
+        long repeatedPatternHeight = ((hugeAssNumber - piecesBeforePattern) / patternSizeInPieces) * patternSize;
+        long answer = heightBeforePattern + repeatedPatternHeight + (heightLastPatternRunFinish - heightLastPatternRunStart);
+        //long answer = (((hugeAssNumber - piecesBeforePattern) / patternSizeInPieces) * patternSize) + heightBeforePattern;
 
 
         Console.WriteLine("Total height: " + answer);
