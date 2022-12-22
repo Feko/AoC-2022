@@ -116,7 +116,7 @@ namespace TestProject1
         }
 
         [Fact]
-        public void Day06_Part1()
+        public void Day21_Part1()
         {
             //long expected = 152; var lines = File.ReadAllLines("Inputs/day21_sample.txt");
             long expected = 169525884255464; var lines = File.ReadAllLines("Inputs/day21.txt");
@@ -130,7 +130,7 @@ namespace TestProject1
         }
 
         [Fact]
-        public void Day06_Part2()
+        public void Day21_Part2()
         {
             //long expected = 301; var lines = File.ReadAllLines("Inputs/day21_sample.txt");
             long expected = 3247317268284; var lines = File.ReadAllLines("Inputs/day21.txt");
