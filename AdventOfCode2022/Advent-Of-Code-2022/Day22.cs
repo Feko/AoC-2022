@@ -110,6 +110,60 @@ namespace TestProject1
             }
         }
 
+        class Part2MyInputWrap : WrapStrategy
+        {
+            public char[,] Grid { get; }
+
+            public Part2MyInputWrap(char[,] grid)
+            {
+                Grid = grid;
+            }
+
+            public bool IsOutbounds((int line, int column) pos)
+            {
+                return pos.line < 0 || pos.column < 0 || pos.line >= Grid.GetLength(0) || pos.column >= Grid.GetLength(1) || Grid[pos.line, pos.column] == EMPTY;
+            }
+
+            public (int line, int column, FacingDirection direction) Wrap((int line, int column) pos, FacingDirection direction)
+            {
+                int pieceSize = 50;
+                (int newLine, int newColumn, FacingDirection newDirection) result = pos switch
+                {
+                    //1 intersects 4
+                    { line: <= 49, column: 49 }  => (149 - (pos.line % pieceSize), 0, FacingDirection.Right), //1 intersects 4, going from 1 to 4
+                    { line: <= 149, column: -1 } => (49 - (pos.line % pieceSize), 50, FacingDirection.Right), //1 intersects 4, going from 4 to 1
+
+                    //1 intersects 6
+                    { line: -1, column: <= 99 }  => (150 + (pos.column % pieceSize), 0, FacingDirection.Right), //1 intersects 6, going from 1 to 6
+                    { line: >= 150, column: -1 } => (0, 50 + (pos.line % pieceSize), FacingDirection.Down), //1 intersects 6, going from 6 to 1
+
+                    //2 intersects 3
+                    { line: 50, column: >= 100 } => (50 + (pos.column % pieceSize), 99, FacingDirection.Left), //2 intersects 3, going from 2 to 3
+                    { line: <= 99, column: 100 } => (49, 100 + (pos.line % pieceSize), FacingDirection.Up), //2 intersects 3, going from 3 to 2
+
+                    //2 intersects 5
+                    { column: 150 }               => (149 - (pos.line % pieceSize), 99, FacingDirection.Left), //2 intersects 5, going from 2 to 5
+                    { line: >= 100, column: 100 } => (49 - (pos.line % pieceSize), 149, FacingDirection.Left), //2 intersects 5, going from 5 to 2
+
+                    //2 intersects 6
+                    { line: -1, column: >= 100 } => (199, 0 + (pos.column % pieceSize), FacingDirection.Up), //2 intersects 6, going from 2 to 6
+                    { line: 200 }                => (0, 100 + (pos.column % pieceSize), FacingDirection.Down), //2 intersects 6, going from 6 to 2
+
+                    //3 intersects 4
+                    { line: >= 50, column: 49 } => (100, 0 + (pos.line % pieceSize), FacingDirection.Down), //3 intersects 4, going from 3 to 4
+                    { line: 99, column: <= 99 } => (50 + (pos.column % pieceSize), 50, FacingDirection.Right), //3 intersects 4, going from 4 to 3
+
+                    //5 intersects 6
+                    { line: 150, column: >= 50 } => (150 + (pos.column % pieceSize), 49, FacingDirection.Left), //5 intersects 6, going from 5 to 6
+                    { line: >= 150, column: 50 } => (149, 50 + (pos.line % pieceSize), FacingDirection.Up), //5 intersects 6, going from 6 to 5
+
+                    _ => throw new NotImplementedException()
+                };
+                return (result.newLine, result.newColumn, result.newDirection);
+
+            }
+        }
+
         const char EMPTY = ' ';
         const char NAVIGABLE = '.';
         const char WALL = '#';
@@ -146,21 +200,24 @@ namespace TestProject1
         [Fact]
         public void Day22_Part2()
         {
-            var text = File.ReadAllText("Inputs/day22_sample.txt");
-            //var text = File.ReadAllText("Inputs/day22.txt");
+            //var text = File.ReadAllText("Inputs/day22_sample.txt");
+            var text = File.ReadAllText("Inputs/day22.txt");
             var parts = text.Split("\n\n");
             var gridLines = parts[0].Split("\n");
             var movements = parts[1];
 
             CreateGrid(gridLines);
 
-            WrapHandler = new Part2ExampleWrap(Grid);
+            WrapHandler = new Part2MyInputWrap(Grid);
+            //WrapHandler = new Part2ExampleWrap(Grid);
 
             PerformMovements(movements);
             int score = (1000 * (CurrentLine + 1)) + (4 * (CurrentColumn + 1)) + ((int)PreviousFacing);
+            int score2 = (1000 * (CurrentLine + 1)) + (4 * (CurrentColumn + 1)) + ((int)CurrentFacing);
             Print();
-            Console.WriteLine($"\n\nFinished on line {CurrentLine + 1}, column {CurrentColumn + 1} and facing  {PreviousFacing}.");
-            Console.WriteLine($"Score: {(1000 * (CurrentLine + 1)) + (4 * (CurrentColumn + 1)) + ((int)PreviousFacing)}");
+            Console.WriteLine($"\n\nFinished on line {CurrentLine + 1}, column {CurrentColumn + 1} and facing / previous {CurrentFacing} {PreviousFacing}.");
+            Console.WriteLine($"Score (PreviousFacing): {score}");
+            Console.WriteLine($"Score (CurrentFacing): {score2}");
         }
 
         private void Turn(char direction)
