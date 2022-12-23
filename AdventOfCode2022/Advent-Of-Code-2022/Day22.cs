@@ -127,35 +127,35 @@ namespace TestProject1
             public (int line, int column, FacingDirection direction) Wrap((int line, int column) pos, FacingDirection direction)
             {
                 int pieceSize = 50;
-                (int newLine, int newColumn, FacingDirection newDirection) result = pos switch
+                (int newLine, int newColumn, FacingDirection newDirection) result = (pos,direction) switch
                 {
                     //1 intersects 4
-                    { line: <= 49, column: 49 }  => (149 - (pos.line % pieceSize), 0, FacingDirection.Right), //1 intersects 4, going from 1 to 4
-                    { line: <= 149, column: -1 } => (49 - (pos.line % pieceSize), 50, FacingDirection.Right), //1 intersects 4, going from 4 to 1
+                    { pos.line: <= 49, pos.column: 49 }  => (149 - (pos.line % pieceSize), 0, FacingDirection.Right), //1 intersects 4, going from 1 to 4
+                    { pos.line: <= 149, pos.column: -1 } => (49 - (pos.line % pieceSize), 50, FacingDirection.Right), //1 intersects 4, going from 4 to 1
 
                     //1 intersects 6
-                    { line: -1, column: <= 99 }  => (150 + (pos.column % pieceSize), 0, FacingDirection.Right), //1 intersects 6, going from 1 to 6
-                    { line: >= 150, column: -1 } => (0, 50 + (pos.line % pieceSize), FacingDirection.Down), //1 intersects 6, going from 6 to 1
+                    { pos.line: -1, pos.column: <= 99 }  => (150 + (pos.column % pieceSize), 0, FacingDirection.Right), //1 intersects 6, going from 1 to 6
+                    { pos.line: >= 150, pos.column: -1 } => (0, 50 + (pos.line % pieceSize), FacingDirection.Down), //1 intersects 6, going from 6 to 1
 
                     //2 intersects 3
-                    { line: 50, column: >= 100 } => (50 + (pos.column % pieceSize), 99, FacingDirection.Left), //2 intersects 3, going from 2 to 3
-                    { line: <= 99, column: 100 } => (49, 100 + (pos.line % pieceSize), FacingDirection.Up), //2 intersects 3, going from 3 to 2
+                    { pos.line: 50, pos.column: >= 100, direction: FacingDirection.Down} => (50 + (pos.column % pieceSize), 99, FacingDirection.Left), //2 intersects 3, going from 2 to 3
+                    { pos.line: <= 99, pos.column: 100, direction: FacingDirection.Right  } => (49, 100 + (pos.line % pieceSize), FacingDirection.Up), //2 intersects 3, going from 3 to 2
 
                     //2 intersects 5
-                    { column: 150 }               => (149 - (pos.line % pieceSize), 99, FacingDirection.Left), //2 intersects 5, going from 2 to 5
-                    { line: >= 100, column: 100 } => (49 - (pos.line % pieceSize), 149, FacingDirection.Left), //2 intersects 5, going from 5 to 2
+                    { pos.column: 150 }               => (149 - (pos.line % pieceSize), 99, FacingDirection.Left), //2 intersects 5, going from 2 to 5
+                    { pos.line: >= 100, pos.column: 100 } => (49 - (pos.line % pieceSize), 149, FacingDirection.Left), //2 intersects 5, going from 5 to 2
 
                     //2 intersects 6
-                    { line: -1, column: >= 100 } => (199, 0 + (pos.column % pieceSize), FacingDirection.Up), //2 intersects 6, going from 2 to 6
-                    { line: 200 }                => (0, 100 + (pos.column % pieceSize), FacingDirection.Down), //2 intersects 6, going from 6 to 2
+                    { pos.line: -1, pos.column: >= 100 } => (199, 0 + (pos.column % pieceSize), FacingDirection.Up), //2 intersects 6, going from 2 to 6
+                    { pos.line: 200 }                => (0, 100 + (pos.column % pieceSize), FacingDirection.Down), //2 intersects 6, going from 6 to 2
 
                     //3 intersects 4
-                    { line: >= 50, column: 49 } => (100, 0 + (pos.line % pieceSize), FacingDirection.Down), //3 intersects 4, going from 3 to 4
-                    { line: 99, column: <= 99 } => (50 + (pos.column % pieceSize), 50, FacingDirection.Right), //3 intersects 4, going from 4 to 3
+                    { pos.line: >= 50, pos.column: 49, direction: FacingDirection.Left } => (100, 0 + (pos.line % pieceSize), FacingDirection.Down), //3 intersects 4, going from 3 to 4
+                    { pos.line: 99, pos.column: <= 49, direction: FacingDirection.Up } => (50 + (pos.column % pieceSize), 50, FacingDirection.Right), //3 intersects 4, going from 4 to 3
 
                     //5 intersects 6
-                    { line: 150, column: >= 50 } => (150 + (pos.column % pieceSize), 49, FacingDirection.Left), //5 intersects 6, going from 5 to 6
-                    { line: >= 150, column: 50 } => (149, 50 + (pos.line % pieceSize), FacingDirection.Up), //5 intersects 6, going from 6 to 5
+                    { pos.line: 150, pos.column: >= 50, direction: FacingDirection.Down } => (150 + (pos.column % pieceSize), 49, FacingDirection.Left), //5 intersects 6, going from 5 to 6
+                    { pos.line: >= 150, pos.column: 50, direction: FacingDirection.Right } => (149, 50 + (pos.line % pieceSize), FacingDirection.Up), //5 intersects 6, going from 6 to 5
 
                     _ => throw new NotImplementedException()
                 };
@@ -234,12 +234,12 @@ namespace TestProject1
 
         private bool IsOutbounds((int line, int column) pos) => WrapHandler.IsOutbounds(pos);
 
-        private (int line, int column) WrapAround((int line, int column) pos)
+        private (int line, int column, FacingDirection facing) WrapAround((int line, int column) pos)
         {
             var result = WrapHandler.Wrap(pos, CurrentFacing);
-            PreviousFacing = CurrentFacing;
-            CurrentFacing = result.direction;
-            return (result.line, result.column);
+            //PreviousFacing = CurrentFacing;
+            //CurrentFacing = result.direction;
+            return (result.line, result.column, result.direction);
         }
 
         private (int line, int column) MoveOnDirection((int line, int column) pos)
@@ -277,6 +277,7 @@ namespace TestProject1
 
                 CurrentLine = pos.line;
                 CurrentColumn = pos.column;
+                CurrentFacing = pos.facingDirection;
             }
         }
 
@@ -292,18 +293,23 @@ namespace TestProject1
             };
         }
 
-        private (int line, int column) GetNewPosition()
+        private (int line, int column, FacingDirection facingDirection) GetNewPosition()
         {
             (int line, int column) newPosition = (CurrentLine, CurrentColumn);
-
+            var facing = CurrentFacing;
             do
             {
                 newPosition = MoveOnDirection(newPosition);
                 if(IsOutbounds(newPosition))
-                    newPosition = WrapAround(newPosition);
+                {
+                    var wrapResult = WrapAround(newPosition);
+                    newPosition = (wrapResult.line, wrapResult.column);
+                    facing = wrapResult.facing;
+                }
+                    
             } 
             while (Grid[newPosition.line, newPosition.column] == EMPTY);
-            return newPosition;
+            return (newPosition.line, newPosition.column, facing);
         }
 
         private List<string> CreateMovements(string movements)
