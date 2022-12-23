@@ -2,175 +2,19 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Numerics;
 using System.Text;
-using System.Threading.Tasks;
 using Xunit;
 
 namespace TestProject1
 {
     public class Day22
     {
-        enum FacingDirection
-        {
-            Right = 0,
-            Down = 1,
-            Left = 2,
-            Up = 3,
-        }
-
-        interface WrapStrategy
-        {
-            (int line, int column, FacingDirection direction) Wrap((int line, int column) pos, FacingDirection direction);
-            bool IsOutbounds((int line, int column) pos);
-        }
-
-        class Part1Wrap : WrapStrategy
-        {
-            public char[,] Grid { get; }
-
-            public Part1Wrap(char[,] grid)
-            {
-                Grid = grid;
-            }
-
-            public bool IsOutbounds((int line, int column) pos)
-            {
-                return pos.line < 0 || pos.column < 0 || pos.line >= Grid.GetLength(0) || pos.column >= Grid.GetLength(1);
-            }
-
-            public (int line, int column, FacingDirection direction) Wrap((int line, int column) pos, FacingDirection direction)
-            {
-                (int line, int column) newPos = (pos.line, pos.column);
-
-                if (pos.line < 0)
-                    newPos.line = Grid.GetLength(0) - 1;
-                if (pos.line >= Grid.GetLength(0))
-                    newPos.line = 0;
-                if (pos.column < 0)
-                    newPos.column = Grid.GetLength(1) - 1;
-                if (pos.column >= Grid.GetLength(1))
-                    newPos.column = 0;
-
-                return (newPos.line, newPos.column, direction);
-            }
-        }
-
-        class Part2ExampleWrap : WrapStrategy
-        {
-            public char[,] Grid { get; }
-
-            public Part2ExampleWrap(char[,] grid)
-            {
-                Grid = grid;
-            }
-
-            public bool IsOutbounds((int line, int column) pos)
-            {
-                return pos.line < 0 || pos.column < 0 || pos.line >= Grid.GetLength(0) || pos.column >= Grid.GetLength(1) || Grid[pos.line, pos.column] == EMPTY;
-            }
-
-            public (int line, int column, FacingDirection direction) Wrap((int line, int column) pos, FacingDirection direction)
-            {
-                int pieceSize = 4;
-                (int newLine, int newColumn, FacingDirection newDirection) result = pos switch
-                {
-                    //1 intersects 2
-                    { line: -1 } => (4, 3 - (pos.column % pieceSize), FacingDirection.Down), //1 intersects 2, going from 1 to 2
-                    { line: 3, column: <= 3 } => (0, 11 - pos.column, FacingDirection.Down), //1 intersects 2, going from 2 to 1
-
-                    //5 intersects 2
-                    { line: 12, column: <= 11 } => (7, 3 - (pos.column % pieceSize), FacingDirection.Up), //5 intersects 2, going from 5 to 2
-                    { line: 8, column: <= 3 } => (11, 11 - pos.column, FacingDirection.Up), //5 intersects 2, going from 2 to 5
-
-                    //2 intersects 6
-                    { column: < 0 } => (11, 15 - (pos.line % pieceSize), FacingDirection.Up), //2 intersects 6, going from 2 to 6
-                    { line: 12, column: > 11 } => (7 - (pos.column % pieceSize), 0, FacingDirection.Right), //2 intersects 6, going from 6 to 2
-
-                    //6 intersects 1
-                    { column: 16 } => (3 - (pos.line % pieceSize), 11, FacingDirection.Left), //6 intersects 1, going from 6 to 1
-                    { line: <= 3, column: 12 } => (11 - (pos.line % pieceSize), 15, FacingDirection.Left), //6 intersects 1, going from 1 to 6
-
-                    //5 intersects 3
-                    { line: >= 8, column: 7 } => (7, 7 - (pos.line % pieceSize), FacingDirection.Up), //5 intersects 3, going from 5 to 3
-                    { line: 8, column: >= 4 } => (11 - (pos.column % pieceSize), 8, FacingDirection.Right), //5 intersects 3, going from 3 to 5
-
-                    //3 intersects 1
-                    { line: 3, column: >= 4 } => (pos.column % pieceSize, 8, FacingDirection.Right), //3 intersects 1, going from 3 to 1
-                    { line: <= 3, column: 7 } => (4, 4 + pos.line, FacingDirection.Down), //3 intersects 1, going from 1 to 3
-
-                    //4 intersects 6
-                    { column: 12 } => (8, 15 - (pos.line % pieceSize), FacingDirection.Down), //4 intersects 6, going from 4 to 6
-                    { line: 7, column: >= 12 } => (7 - (pos.column % pieceSize), 11, FacingDirection.Left), //4 intersects 6, going from 6 to 4
-
-                    _ => throw new NotImplementedException()
-                };
-                return (result.newLine, result.newColumn, result.newDirection);
-
-            }
-        }
-
-        class Part2MyInputWrap : WrapStrategy
-        {
-            public char[,] Grid { get; }
-
-            public Part2MyInputWrap(char[,] grid)
-            {
-                Grid = grid;
-            }
-
-            public bool IsOutbounds((int line, int column) pos)
-            {
-                return pos.line < 0 || pos.column < 0 || pos.line >= Grid.GetLength(0) || pos.column >= Grid.GetLength(1) || Grid[pos.line, pos.column] == EMPTY;
-            }
-
-            public (int line, int column, FacingDirection direction) Wrap((int line, int column) pos, FacingDirection direction)
-            {
-                int pieceSize = 50;
-                (int newLine, int newColumn, FacingDirection newDirection) result = (pos,direction) switch
-                {
-                    //1 intersects 4
-                    { pos.line: <= 49, pos.column: 49 }  => (149 - (pos.line % pieceSize), 0, FacingDirection.Right), //1 intersects 4, going from 1 to 4
-                    { pos.line: <= 149, pos.column: -1 } => (49 - (pos.line % pieceSize), 50, FacingDirection.Right), //1 intersects 4, going from 4 to 1
-
-                    //1 intersects 6
-                    { pos.line: -1, pos.column: <= 99 }  => (150 + (pos.column % pieceSize), 0, FacingDirection.Right), //1 intersects 6, going from 1 to 6
-                    { pos.line: >= 150, pos.column: -1 } => (0, 50 + (pos.line % pieceSize), FacingDirection.Down), //1 intersects 6, going from 6 to 1
-
-                    //2 intersects 3
-                    { pos.line: 50, pos.column: >= 100, direction: FacingDirection.Down} => (50 + (pos.column % pieceSize), 99, FacingDirection.Left), //2 intersects 3, going from 2 to 3
-                    { pos.line: <= 99, pos.column: 100, direction: FacingDirection.Right  } => (49, 100 + (pos.line % pieceSize), FacingDirection.Up), //2 intersects 3, going from 3 to 2
-
-                    //2 intersects 5
-                    { pos.column: 150 }               => (149 - (pos.line % pieceSize), 99, FacingDirection.Left), //2 intersects 5, going from 2 to 5
-                    { pos.line: >= 100, pos.column: 100 } => (49 - (pos.line % pieceSize), 149, FacingDirection.Left), //2 intersects 5, going from 5 to 2
-
-                    //2 intersects 6
-                    { pos.line: -1, pos.column: >= 100 } => (199, 0 + (pos.column % pieceSize), FacingDirection.Up), //2 intersects 6, going from 2 to 6
-                    { pos.line: 200 }                => (0, 100 + (pos.column % pieceSize), FacingDirection.Down), //2 intersects 6, going from 6 to 2
-
-                    //3 intersects 4
-                    { pos.line: >= 50, pos.column: 49, direction: FacingDirection.Left } => (100, 0 + (pos.line % pieceSize), FacingDirection.Down), //3 intersects 4, going from 3 to 4
-                    { pos.line: 99, pos.column: <= 49, direction: FacingDirection.Up } => (50 + (pos.column % pieceSize), 50, FacingDirection.Right), //3 intersects 4, going from 4 to 3
-
-                    //5 intersects 6
-                    { pos.line: 150, pos.column: >= 50, direction: FacingDirection.Down } => (150 + (pos.column % pieceSize), 49, FacingDirection.Left), //5 intersects 6, going from 5 to 6
-                    { pos.line: >= 150, pos.column: 50, direction: FacingDirection.Right } => (149, 50 + (pos.line % pieceSize), FacingDirection.Up), //5 intersects 6, going from 6 to 5
-
-                    _ => throw new NotImplementedException()
-                };
-                return (result.newLine, result.newColumn, result.newDirection);
-
-            }
-        }
-
         const char EMPTY = ' ';
         const char NAVIGABLE = '.';
         const char WALL = '#';
 
         char[,] Grid = new char[0, 0];
         FacingDirection CurrentFacing = FacingDirection.Right; 
-        FacingDirection PreviousFacing = FacingDirection.Right; 
         int CurrentLine = 0;
         int CurrentColumn = 0;
         WrapStrategy WrapHandler;
@@ -191,17 +35,13 @@ namespace TestProject1
             PerformMovements(movements);
             int score = (1000 * (CurrentLine + 1)) + (4 * (CurrentColumn + 1)) + ((int)CurrentFacing);
             Assert.Equal(expected, score);
-
-            //Print();
-            //Console.WriteLine($"\n\nFinished on line {CurrentLine + 1}, column {CurrentColumn + 1} and facing  {CurrentFacing}.");
-            //Console.WriteLine($"Score: {score}");
         }
 
         [Fact]
         public void Day22_Part2()
         {
             //var text = File.ReadAllText("Inputs/day22_sample.txt");
-            var text = File.ReadAllText("Inputs/day22.txt");
+            int expected = 106392; var text = File.ReadAllText("Inputs/day22.txt");
             var parts = text.Split("\n\n");
             var gridLines = parts[0].Split("\n");
             var movements = parts[1];
@@ -212,12 +52,8 @@ namespace TestProject1
             //WrapHandler = new Part2ExampleWrap(Grid);
 
             PerformMovements(movements);
-            int score = (1000 * (CurrentLine + 1)) + (4 * (CurrentColumn + 1)) + ((int)PreviousFacing);
-            int score2 = (1000 * (CurrentLine + 1)) + (4 * (CurrentColumn + 1)) + ((int)CurrentFacing);
-            Print();
-            Console.WriteLine($"\n\nFinished on line {CurrentLine + 1}, column {CurrentColumn + 1} and facing / previous {CurrentFacing} {PreviousFacing}.");
-            Console.WriteLine($"Score (PreviousFacing): {score}");
-            Console.WriteLine($"Score (CurrentFacing): {score2}");
+            int score = (1000 * (CurrentLine + 1)) + (4 * (CurrentColumn + 1)) + ((int)CurrentFacing);
+            Assert.Equal(expected, score);
         }
 
         private void Turn(char direction)
@@ -232,24 +68,18 @@ namespace TestProject1
             }
         }
 
-        private bool IsOutbounds((int line, int column) pos) => WrapHandler.IsOutbounds(pos);
+        private bool IsOutbounds(Direction pos) => WrapHandler.IsOutbounds(pos);
 
-        private (int line, int column, FacingDirection facing) WrapAround((int line, int column) pos)
-        {
-            var result = WrapHandler.Wrap(pos, CurrentFacing);
-            //PreviousFacing = CurrentFacing;
-            //CurrentFacing = result.direction;
-            return (result.line, result.column, result.direction);
-        }
+        private Direction WrapAround(Direction direction) => WrapHandler.Wrap(direction);
 
-        private (int line, int column) MoveOnDirection((int line, int column) pos)
+        private Direction MoveOnDirection(Direction pos)
         {
             return CurrentFacing switch
             {
-                FacingDirection.Right => (pos.line, pos.column +1),
-                FacingDirection.Left => (pos.line, pos.column -1),
-                FacingDirection.Up => (pos.line -1, pos.column),
-                FacingDirection.Down => (pos.line +1, pos.column),
+                FacingDirection.Right => new Direction(pos.line, pos.column +1, CurrentFacing),
+                FacingDirection.Left => new Direction(pos.line, pos.column -1, CurrentFacing),
+                FacingDirection.Up => new Direction(pos.line -1, pos.column, CurrentFacing),
+                FacingDirection.Down => new Direction(pos.line +1, pos.column, CurrentFacing),
                 _ => throw new Exception("Just..... how?")
             };
         }
@@ -277,7 +107,7 @@ namespace TestProject1
 
                 CurrentLine = pos.line;
                 CurrentColumn = pos.column;
-                CurrentFacing = pos.facingDirection;
+                CurrentFacing = pos.direction;
             }
         }
 
@@ -293,23 +123,18 @@ namespace TestProject1
             };
         }
 
-        private (int line, int column, FacingDirection facingDirection) GetNewPosition()
+        private Direction GetNewPosition()
         {
-            (int line, int column) newPosition = (CurrentLine, CurrentColumn);
-            var facing = CurrentFacing;
+            Direction newPosition = new Direction(CurrentLine, CurrentColumn, CurrentFacing);
             do
             {
                 newPosition = MoveOnDirection(newPosition);
                 if(IsOutbounds(newPosition))
-                {
-                    var wrapResult = WrapAround(newPosition);
-                    newPosition = (wrapResult.line, wrapResult.column);
-                    facing = wrapResult.facing;
-                }
+                    newPosition = WrapAround(newPosition);
                     
             } 
             while (Grid[newPosition.line, newPosition.column] == EMPTY);
-            return (newPosition.line, newPosition.column, facing);
+            return newPosition;
         }
 
         private List<string> CreateMovements(string movements)
@@ -353,17 +178,6 @@ namespace TestProject1
             for (int line = 0; line < gridLines.Length; line++)
                 for (int column = 0; column < gridLines[line].Length; column++)
                     Grid[line, column] = gridLines[line][column];
-        }
-
-        private void Print()
-        {
-            Console.Clear();
-            for (int line = 0; line < Grid.GetLength(0); line++)
-            {
-                for (int column = 0; column < Grid.GetLength(1); column++)
-                    Console.Write(Grid[line, column]);
-                Console.Write("\n");
-            }
         }
     }
 }
